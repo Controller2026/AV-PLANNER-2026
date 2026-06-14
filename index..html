@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Mission Control</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{background:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+.app{max-width:500px;margin:0 auto;min-height:100vh;background:#fff;position:relative;}
+/* Nuovo Header con sfumatura Giallo-Verde */
+.hdr{background:linear-gradient(135deg, #f59e0b 0%, #10b981 100%);padding:20px 16px 14px;}
+.hdr-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#fff;opacity:0.8;font-weight:600;}
+.hdr-title{font-size:22px;font-weight:800;color:#fff;margin-top:2px;}
+.hdr-date{font-size:11px;color:#fff;opacity:0.9;margin-top:2px;}
+.hdr-ring{margin-top:14px;background:rgba(255,255,255,0.15);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.hdr-ring-info{flex:1;}
+.hdr-ring-label{font-size:11px;color:#fff;opacity:0.8;}
+.hdr-ring-val{font-size:17px;font-weight:800;color:#fff;}
+.hdr-ring-bar{height:5px;background:rgba(255,255,255,0.2);border-radius:3px;margin-top:6px;}
+.hdr-ring-fill{height:5px;background:#fff;border-radius:3px;}
+.nav{display:flex;background:#fff;border-bottom:2px solid #f1f5f9;position:sticky;top:0;z-index:100;}
+.nb{flex:1;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 0 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.nb.active{border-bottom-color:#6366f1;}
+.nb-icon{font-size:22px;line-height:1;}
+.nb-label{font-size:10px;color:#94a3b8;font-weight:500;line-height:1;}
+.nb.active .nb-label{color:#6366f1;font-weight:700;}
+.content{padding:14px;padding-bottom:90px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.kpi{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:14px;position:relative;overflow:hidden;}
+.kpi-val{font-size:28px;font-weight:800;}
+.kpi-label{font-size:11px;color:#64748b;margin-top:2px;}
+.kpi-icon{position:absolute;top:10px;right:12px;font-size:20px;opacity:0.2;}
+.card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;margin-bottom:12px;overflow:hidden;}
+.card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;}
+.card-title{font-size:14px;font-weight:700;color:#1e293b;flex:1;}
+.card-sub{font-size:11px;color:#94a3b8;}
+.card-body{padding:12px 14px;}
+.task-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;cursor:pointer;background:#fff;}
+.tcheck{width:22px;height:22px;border-radius:5px;border:2px solid #e2e8f0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;}
+.tcheck.done{background:#10b981;border-color:#10b981;color:#fff;}
+.tcheck.progress{background:#f59e0b;border-color:#f59e0b;color:#fff;}
+.tinfo{flex:1;min-width:0;}
+.tcode{font-size:10px;color:#94a3b8;font-weight:600;}
+.tname{font-size:12px;font-weight:600;color:#1e293b;}
+.tname.done{text-decoration:line-through;color:#94a3b8;}
+.tdate{font-size:10px;color:#64748b;}
+.tpill{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+.pill-todo{background:#f1f5f9;color:#64748b;}
+.pill-progress{background:#fef3c7;color:#d97706;}
+.pill-done{background:#d1fae5;color:#059669;}
+.pbar-row{display:flex;align-items:center;gap:8px;margin-top:6px;}
+.pbar-bg{flex:1;height:6px;background:#f1f5f9;border-radius:3px;}
+.pbar-fill{height:6px;border-radius:3px;}
+.pbar-pct{font-size:11px;font-weight:700;min-width:28px;text-align:right;}
+.sbar{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;}
+.sbar-done{background:#10b981;}
+.sbar-prog{background:#f59e0b;}
+.sbar-todo{background:#e2e8f0;}
+.sez{border-radius:12px;border:1px solid #e2e8f0;margin-bottom:10px;overflow:hidden;}
+.sez-hd{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;background:#fff;}
+.sez-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.sez-name{font-size:14px;font-weight:700;color:#1e293b;flex:1;}
+.sez-info{font-size:11px;color:#94a3b8;}
+.sez-chev{font-size:12px;color:#94a3b8;transition:transform 0.2s;flex-shrink:0;}
+.sez-chev.open{transform:rotate(90deg);}
+.sez-body{padding:10px 14px;background:#fafafa;border-top:1px solid #f1f5f9;}
+.course{background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:10px 12px;margin-bottom:8px;}
+.course-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.course-code{font-size:10px;font-weight:700;color:#64748b;}
+.course-name{font-size:13px;font-weight:600;color:#1e293b;margin-top:1px;}
+.cbtns{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.cbtn{border:none;border-radius:7px;padding:4px 7px;font-size:11px;cursor:pointer;}
+.pay{background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:10px 12px;margin-bottom:8px;cursor:pointer;}
+.pay-code{font-size:10px;font-weight:700;color:#94a3b8;}
+.pay-name{font-size:13px;font-weight:600;color:#1e293b;margin-top:1px;}
+.pay-row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+.pay-amt{font-size:16px;font-weight:800;}
+.pay-due{font-size:11px;color:#64748b;}
+.pay-st{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.ps-paid{background:#d1fae5;color:#059669;}
+.ps-soon{background:#fef3c7;color:#d97706;}
+.ps-over{background:#fee2e2;color:#dc2626;}
+.ps-pend{background:#f1f5f9;color:#64748b;}
+.add-row{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px dashed #e2e8f0;border-radius:10px;cursor:pointer;color:#94a3b8;font-size:12px;font-weight:600;margin-top:4px;background:none;width:100%;}
+
+/* ── CALENDAR ── */
+.cal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.cal-nav{background:#f1f5f9;border:none;border-radius:8px;padding:6px 16px;font-size:18px;font-weight:700;cursor:pointer;color:#1e293b;}
+.cal-center{text-align:center;}
+.cal-title{font-size:17px;font-weight:800;color:#1e293b;}
+.cal-today-btn{font-size:10px;color:#6366f1;font-weight:700;background:none;border:none;cursor:pointer;margin-top:2px;}
+.cal-tabs{display:flex;gap:3px;margin-bottom:14px;background:#f1f5f9;border-radius:10px;padding:3px;}
+.cal-tab{flex:1;background:none;border:none;border-radius:8px;padding:7px 4px;font-size:11px;cursor:pointer;color:#64748b;font-weight:600;}
+.cal-tab.active{background:#fff;color:#6366f1;font-weight:800;box-shadow:0 1px 4px rgba(0,0,0,0.1);}
+.cal-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding:10px;background:#f8fafc;border-radius:10px;}
+.leg-item{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.leg-lbl{font-size:10px;color:#64748b;font-weight:600;}
+
+/* MONTH */
+.month-wrap{border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;}
+.month-dow-row{display:grid;grid-template-columns:repeat(7,1fr);background:#f8fafc;border-bottom:1px solid #e2e8f0;}
+.month-dow{text-align:center;font-size:11px;color:#94a3b8;font-weight:700;padding:8px 0;}
+.month-week{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #f1f5f9;}
+.month-week:last-child{border-bottom:none;}
+.month-cell{min-height:72px;padding:4px;border-right:1px solid #f1f5f9;position:relative;vertical-align:top;cursor:pointer;transition:background 0.2s;}
+.month-cell:hover{background:#f8fafc;}
+.month-cell.other .mnum{color:#cbd5e1;}
+.month-cell.today-c{background:#eef2ff;}
+/* Colore per i task in partenza tra 1 e 7 giorni */
+.month-cell.soon-c{background:#fffbeb;border:1px dashed #f59e0b;}
+.mnum{font-size:12px;font-weight:700;color:#1e293b;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:3px;}
+.month-cell.today-c .mnum{background:#6366f1;color:#fff;}
+.mev-bar{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#fff;width:100%;}
+.mev-dot-row{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;}
+.mev-dot{width:6px;height:6px;border-radius:50%;}
+
+/* WEEK */
+.week-container{overflow-x:auto;}
+.week-grid{display:flex;min-width:340px;}
+.week-time-col{width:38px;flex-shrink:0;padding-top:44px;}
+.week-time-slot{height:52px;display:flex;align-items:flex-start;justify-content:flex-end;padding-right:6px;padding-top:2px;border-top:1px solid #f1f5f9;}
+.week-time-lbl{font-size:9px;color:#94a3b8;font-weight:600;}
+.week-days-wrap{flex:1;display:flex;}
+.week-day-col{flex:1;min-width:44px;border-left:1px solid #f1f5f9;}
+.week-day-hd{height:44px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;border-bottom:2px solid #f1f5f9;background:#fff;position:sticky;top:0;z-index:5;}
+.week-day-name{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase;}
+.week-day-num{font-size:14px;font-weight:800;color:#1e293b;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-top:1px;}
+.week-day-num.today{background:#6366f1;color:#fff;}
+.week-slot{height:52px;border-top:1px solid #f8fafc;position:relative;}
+.week-ev{position:absolute;left:1px;right:1px;border-radius:5px;padding:2px 4px;font-size:9px;font-weight:700;color:#fff;overflow:hidden;cursor:pointer;z-index:3;}
+
+/* DAY */
+.day-hd{font-size:14px;font-weight:800;color:#1e293b;margin-bottom:12px;text-transform:capitalize;}
+.day-slot{display:flex;min-height:52px;border-top:1px solid #f8fafc;}
+.day-time{font-size:10px;color:#94a3b8;font-weight:600;width:40px;flex-shrink:0;padding-top:4px;}
+.day-evs{flex:1;padding:2px 0 2px 4px;display:flex;flex-direction:column;gap:3px;}
+.day-ev{border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;}
+
+/* YEAR */
+.year-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.year-month{border-radius:10px;border:1px solid #e2e8f0;padding:10px;overflow:hidden;}
+.year-month-name{font-size:12px;font-weight:700;color:#1e293b;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.year-ev-count{font-size:10px;color:#94a3b8;font-weight:400;}
+.year-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px;}
+.year-dow-lbl{text-align:center;font-size:8px;color:#cbd5e1;font-weight:700;}
+.year-mini{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+.year-day{height:14px;border-radius:2px;display:flex;align-items:center;justify-content:center;}
+.year-day.y-today{outline:2px solid #6366f1;border-radius:3px;}
+.year-day-num{font-size:7px;color:#cbd5e1;}
+.year-day.has-ev .year-day-num{color:transparent;}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:18px 18px 0;}
+.modal-title{font-size:16px;font-weight:700;color:#1e293b;}
+.modal-x{background:#f1f5f9;border:none;border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer;color:#64748b;}
+.modal-body{padding:18px;display:flex;flex-direction:column;gap:13px;}
+.flabel{font-size:12px;color:#64748b;margin-bottom:4px;display:block;font-weight:500;}
+.inp{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;color:#1e293b;padding:10px 12px;font-size:14px;width:100%;outline:none;font-family:inherit;}
+.inp:focus{border-color:#6366f1;}
+.inp2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-main{border:none;border-radius:12px;color:#fff;padding:13px;font-size:14px;font-weight:700;cursor:pointer;width:100%;}
+.btn-del{background:#fee2e2;border:none;border-radius:12px;color:#dc2626;padding:11px;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-top:4px;}
+.fab{position:fixed;bottom:22px;right:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;border-radius:16px;width:54px;height:54px;font-size:24px;color:#fff;cursor:pointer;box-shadow:0 4px 18px rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;z-index:50;}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:2000;color:#fff;pointer-events:none;}
+.empty{text-align:center;padding:24px;color:#94a3b8;font-size:13px;}
+input[type=range]{accent-color:#6366f1;width:100%;}
+
+/* Sync Box */
+.sync-box{background:#f1f5f9;border-radius:10px;padding:12px;margin-top:14px;display:flex;flex-direction:column;gap:8px;}
+.sync-btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.btn-sync{background:#fff;border:1px solid #cbd5e1;padding:8px;font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;text-align:center;}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+const SK="mc2026v5";
+const SEZ=[
+  {id:"A",name:"Formazione",icon:"🎓",color:"#6366f1",light:"#eef2ff"},
+  {id:"B",name:"Pagamenti",icon:"💳",color:"#f59e0b",light:"#fef3c7"},
+  {id:"C",name:"Soft Skill",icon:"🧠",color:"#10b981",light:"#d1fae5"},
+  {id:"D",name:"Lavoro",icon:"💼",color:"#3b82f6",light:"#dbeafe"},
+  {id:"E",name:"Spirito Santo",icon:"✝️",color:"#ec4899",light:"#fce7f3"},
+  {id:"F",name:"Varie",icon:"📌",color:"#94a3b8",light:"#f1f5f9"},
+];
+const MESI=["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const MESI_S=["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+const GG=["L","M","M","G","V","S","D"];
+const GGS=["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const oggi=()=>new Date().toISOString().slice(0,10);
+const fmtD=s=>{if(!s)return"";return new Date(s).toLocaleDateString("it-IT",{day:"2-digit",month:"short"});};
+const isPast=s=>s&&new Date(s)<new Date();
+const daysTo=s=>{if(!s)return null;return Math.ceil((new Date(s)-new Date())/86400000);};
+
+let DB={courses:[],tasks:[],payments:[]};
+let S={view:"dashboard",modal:null,calView:"month",calDate:new Date(),openSez:{},ec:null,et:null,ep:null,fsez:"all"};
+let FC={
+  course:{sezId:"A",name:"",notes:""},
+  task:{courseId:"",name:"",date:"",time:"",status:"todo",priority:"media",link:"",notes:"",progress:0},
+  pay:{name:"",amount:"",dueDate:"",status:"pending",notes:""}
+};
+
+function load(){try{const d=JSON.parse(localStorage.getItem(SK));if(d)DB=d;}catch(e){}}
+function savDB(){try{localStorage.setItem(SK,JSON.stringify(DB));}catch(e){}}
+load();
+
+const gsez=id=>SEZ.find(s=>s.id===id);
+const gcourse=id=>DB.courses.find(c=>c.id===id);
+const gcourses=sid=>DB.courses.filter(c=>c.sezId===sid);
+const gtasks=cid=>DB.tasks.filter(t=>t.courseId===cid);
+const ccode=(sid,i)=>`Sez.${sid}.${String(i+1).padStart(2,"0")}`;
+const tcode=(sid,ci,ti)=>`Sez.${sid}.${String(ci+1).padStart(2,"0")}.${String(ti+1).padStart(2,"0")}`;
+const pcode=i=>`Sez.B.${String(i+1).padStart(2,"0")}`;
+
+function calcStats(){
+  const tot=DB.tasks.length,done=DB.tasks.filter(t=>t.status==="done").length;
+  const prog=DB.tasks.filter(t=>t.status==="progress").length,todo=DB.tasks.filter(t=>t.status==="todo").length;
+  const pct=tot>0?Math.round(done/tot*100):0;
+  const bySez=SEZ.map(s=>{
+    const tt=gcourses(s.id).flatMap(c=>gtasks(c.id));
+    const d=tt.filter(t=>t.status==="done").length,p=tt.filter(t=>t.status==="progress").length,td=tt.filter(t=>t.status==="todo").length;
+    return{...s,total:tt.length,done:d,prog:p,todo:td,pct:tt.length>0?Math.round(d/tt.length*100):0};
+  });
+  const pt=DB.payments.reduce((s,p)=>s+Number(p.amount||0),0);
+  const pp=DB.payments.filter(p=>p.status==="paid").reduce((s,p)=>s+Number(p.amount||0),0);
+  return{tot,done,prog,todo,pct,bySez,pt,pp};
+}
+
+function buildEvMap(){
+  const m={};
+  DB.tasks.forEach(t=>{
+    if(!t.date)return;
+    const c=gcourse(t.courseId),sz=c?gsez(c.sezId):null;
+    if(!m[t.date])m[t.date]=[];
+    m[t.date].push({id:t.id,name:t.name,time:t.time||"",status:t.status,color:sz?.color||"#94a3b8",sez:sz?.name||""});
+  });
+  DB.payments.forEach(p=>{
+    if(!p.dueDate)return;
+    if(!m[p.dueDate])m[p.dueDate]=[];
+    m[p.dueDate].push({id:"p_"+p.id,name:"💳 "+p.name,time:"",status:p.status==="paid"?"done":"todo",color:"#f59e0b",sez:"Pagamenti"});
+  });
+  return m;
+}
+
+function toast(msg,t="ok"){
+  const el=document.createElement("div");
+  el.className="toast";el.style.background=t==="err"?"#ef4444":"#10b981";el.textContent=msg;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),2500);
+}
+
+function setView(v){S.view=v;render();}
+function toggleSez(id){S.openSez[id]=!S.openSez[id];render();}
+function setCalView(v){S.calView=v;render();}
+function calPrev(){const d=new Date(S.calDate);if(S.calView==="day")d.setDate(d.getDate()-1);else if(S.calView==="week")d.setDate(d.getDate()-7);else if(S.calView==="month")d.setMonth(d.getMonth()-1);else d.setFullYear(d.getFullYear()-1);S.calDate=d;render();}
+function calNext(){const d=new Date(S.calDate);if(S.calView==="day")d.setDate(d.getDate()+1);else if(S.calView==="week")d.setDate(d.getDate()+7);else if(S.calView==="month")d.setMonth(d.getMonth()+1);else d.setFullYear(d.getFullYear()+1);S.calDate=d;render();}
+function goToday(){S.calDate=new Date();render();}
+function goDayView(isoStr){S.calDate=new Date(isoStr);S.calView="day";render();}
+
+function openNC(sid){S.ec=null;FC.course={sezId:sid||"A",name:"",notes:""};S.modal="course";render();}
+function openEC(id){const c=gcourse(id);if(!c)return;S.ec=c;FC.course={sezId:c.sezId,name:c.name,notes:c.notes||""};S.modal="course";render();}
+function saveCourse(){
+  const name=(document.getElementById("ic_name")||{value:""}).value.trim();
+  const notes=(document.getElementById("ic_notes")||{value:""}).value;
+  if(!name){toast("Inserisci un nome","err");return;}
+  if(S.ec){DB.courses=DB.courses.map(c=>c.id===S.ec.id?{...c,sezId:FC.course.sezId,name,notes}:c);toast("Aggiornato ✓");}
+  else{DB.courses.push({id:uid(),sezId:FC.course.sezId,name,notes,createdAt:oggi()});toast("Corso aggiunto 🎯");}
+  savDB();S.modal=null;render();
+}
+function delCourse(id){if(!confirm("Eliminare corso e task?"))return;DB.courses=DB.courses.filter(c=>c.id!==id);DB.tasks=DB.tasks.filter(t=>t.courseId!==id);savDB();toast("Eliminato");render();}
+
+function openNT(cid){S.et=null;FC.task={courseId:cid||"",name:"",date:"",time:"",status:"todo",priority:"media",link:"",notes:"",progress:0};S.modal="task";render();}
+function openET(id){const t=DB.tasks.find(x=>x.id===id);if(!t)return;S.et=t;FC.task={courseId:t.courseId,name:t.name,date:t.date||"",time:t.time||"",status:t.status,priority:t.priority||"media",link:t.link||"",notes:t.notes||"",progress:t.progress||0};S.modal="task";render();}
+function saveTask(){
+  const name=(document.getElementById("it_name")||{value:""}).value.trim();
+  const date=(document.getElementById("it_date")||{value:""}).value;
+  const time=(document.getElementById("it_time")||{value:""}).value;
+  const link=(document.getElementById("it_link")||{value:""}).value;
+  const notes=(document.getElementById("it_notes")||{value:""}).value;
+  if(!name){toast("Inserisci un nome","err");return;}
+  const obj={courseId:FC.task.courseId,name,date,time,status:FC.task.status,priority:FC.task.priority,link,notes,progress:Number(FC.task.progress)};
+  if(S.et){DB.tasks=DB.tasks.map(t=>t.id===S.et.id?{...t,...obj}:t);toast("Aggiornato ✓");}
+  else{DB.tasks.push({id:uid(),...obj,createdAt:oggi()});toast("Task aggiunto ✅");}
+  savDB();S.modal=null;render();
+}
+function delTask(id){if(!confirm("Eliminare?"))return;DB.tasks=DB.tasks.filter(t=>t.id!==id);savDB();toast("Eliminato");S.modal=null;render();}
+function toggleTask(id){DB.tasks=DB.tasks.map(t=>{if(t.id!==id)return t;const ns=t.status==="done"?"todo":"done";return{...t,status:ns,progress:ns==="done"?100:t.progress};});savDB();render();}
+function openNP(){S.ep=null;FC.pay={name:"",amount:"",dueDate:"",status:"pending",notes:""};S.modal="pay";render();}
+function openEP(id){const p=DB.payments.find(x=>x.id===id);if(!p)return;S.ep=p;FC.pay={name:p.name,amount:p.amount,dueDate:p.dueDate||"",status:p.status,notes:p.notes||""};S.modal="pay";render();}
+function savePay(){
+  const name=(document.getElementById("ip_name")||{value:""}).value.trim();
+  const amount=(document.getElementById("ip_amt")||{value:""}).value;
+  const dueDate=(document.getElementById("ip_due")||{value:""}).value;
+  const notes=(document.getElementById("ip_notes")||{value:""}).value;
+  if(!name||!amount){toast("Inserisci nome e importo","err");return;}
+  const obj={name,amount,dueDate,status:FC.pay.status,notes};
+  if(S.ep){DB.payments=DB.payments.map(p=>p.id===S.ep.id?{...p,...obj}:p);toast("Aggiornato ✓");}
+  else{DB.payments.push({id:uid(),...obj,createdAt:oggi()});toast("Pagamento aggiunto 💳");}
+  savDB();S.modal=null;render();
+}
+function delPay(id){if(!confirm("Eliminare?"))return;DB.payments=DB.payments.filter(p=>p.id!==id);savDB();toast("Eliminato");S.modal=null;render();}
+function closeModal(){S.modal=null;render();}
+function oclk(e){if(e.target.classList.contains("overlay"))closeModal();}
+function upRange(v){FC.task.progress=v;const el=document.getElementById("rv");if(el)el.textContent=v+"%";}
+
+/* Funzioni Sincronizzazione / Backup Cross-Device */
+function exportJSON(){
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
+  const dlAnchorElem = document.createElement('a');
+  dlAnchorElem.setAttribute("href", dataStr);
+  dlAnchorElem.setAttribute("download", `mission_control_backup_${oggi()}.json`);
+  dlAnchorElem.click();
+}
+function importJSON(e){
+  const reader = new FileReader();
+  reader.onload = function(event){
+    try {
+      const parsed = JSON.parse(event.target.result);
+      if(parsed.courses && parsed.tasks && parsed.payments) {
+        DB = parsed; savDB(); render(); toast("Database importato con successo!");
+      } else { toast("Formato file non valido", "err"); }
+    } catch(err) { toast("Errore di lettura file", "err"); }
+  };
+  if(e.files[0]) reader.readAsText(e.files[0]);
+}
+function copyToClipboard(){
+  const txt = JSON.stringify(DB);
+  navigator.clipboard.writeText(txt).then(()=>{
+    toast("Database copiato in memoria! Invialo sul PC/Smartphone");
+  }).catch(()=>{ toast("Errore copia", "err"); });
+}
+function pasteFromClipboard(){
+  const txt = prompt("Incolla qui il codice del database copiato dall'altro dispositivo:");
+  if(!txt) return;
+  try {
+    const parsed = JSON.parse(txt);
+    if(parsed.courses && parsed.tasks && parsed.payments) {
+      DB = parsed; savDB(); render(); toast("Sincronizzato correttamente!");
+    } else { toast("Dati non validi", "err"); }
+  } catch(e) { toast("Errore parsing dati", "err"); }
+}
+
+function ring(pct,color,sz,st){
+  const r=(sz-st*2)/2,c=2*Math.PI*r;
+  return`<svg width="${sz}" height="${sz}" style="flex-shrink:0"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#f1f5f9" stroke-width="${st}"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${st}" stroke-dasharray="${pct/100*c} ${c}" stroke-dashoffset="${c/4}" style="transform:rotate(180deg);transform-origin:50% 50%"/><text x="${sz/2}" y="${sz/2+4}" text-anchor="middle" font-size="10" font-weight="800" fill="#1e293b">${pct}%</text></svg>`;
+}
+
+// ── CALENDAR MONTH (con evidenza scadenze imminenti) ──
+function calMonth(em){
+  const d=S.calDate,y=d.getFullYear(),mo=d.getMonth();
+  const fd=new Date(y,mo,1),ld=new Date(y,mo+1,0);
+  let sd=fd.getDay();if(sd===0)sd=7;sd--;
+  const og=oggi();
+  const days=[];
+  const prevLast=new Date(y,mo,0).getDate();
+  for(let i=sd-1;i>=0;i--)days.push({day:prevLast-i,iso:null,other:true});
+  for(let day=1;day<=ld.getDate();day++){
+    const iso=`${y}-${String(mo+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const evs = em[iso] || [];
+    const diff = daysTo(iso);
+    // Condizione: corso/task attivo in partenza tra 1 e 7 giorni
+    const isSoon = diff !== null && diff > 0 && diff <= 7 && evs.some(e => e.status !== 'done');
+    days.push({day,iso,other:false,isToday:iso===og,isSoon,evs});
+  }
+  const rem=(7-days.length%7)%7;
+  for(let i=1;i<=rem;i++)days.push({day:i,iso:null,other:true});
+
+  const weeks=[];
+  for(let w=0;w<days.length;w+=7)weeks.push(days.slice(w,w+7));
+
+  const dowH=`<div class="month-dow-row">${GG.map(g=>`<div class="month-dow">${g}</div>`).join("")}</div>`;
+  const weeksH=weeks.map(week=>{
+    const cells=week.map(dc=>{
+      if(dc.other)return`<div class="month-cell other"><div class="mnum">${dc.day}</div></div>`;
+      const evBars=dc.evs.slice(0,2).map(e=>`<div class="mev-bar" style="background:${e.status==="done"?"#10b981":e.color}">${e.name.slice(0,10)}</div>`).join("");
+      const moreDots=dc.evs.length>2?`<div class="mev-dot-row">${dc.evs.slice(2,5).map(e=>`<div class="mev-dot" style="background:${e.color}"></div>`).join("")}</div>`:"";
+      let cellClass = dc.isToday ? "today-c" : (dc.isSoon ? "soon-c" : "");
+      return`<div class="month-cell ${cellClass}" onclick="goDayView('${dc.iso}')"><div class="mnum">${dc.day}</div>${evBars}${moreDots}</div>`;
+    }).join("");
+    return`<div class="month-week">${cells}</div>`;
+  }).join("");
+  return`<div class="month-wrap">${dowH}${weeksH}</div>`;
+}
+
+// ── CALENDAR WEEK ──
+function calWeek(em){
+  const d=S.calDate,dow=d.getDay(),diff=dow===0?-6:1-dow;
+  const sw=new Date(d);sw.setDate(d.getDate()+diff);
+  const og=oggi(),hrs=[];
+  for(let h=7;h<=21;h++)hrs.push(h);
+  const days=[];
+  for(let i=0;i<7;i++){const dd=new Date(sw);dd.setDate(sw.getDate()+i);days.push(dd);}
+
+  const timecol=`<div class="week-time-col">${hrs.map(h=>`<div class="week-time-slot"><span class="week-time-lbl">${String(h).padStart(2,"0")}:00</span></div>`).join("")}</div>`;
+
+  const daycols=days.map((dd,i)=>{
+    const iso=dd.toISOString().slice(0,10),isT=iso===og,devs=em[iso]||[];
+    const slots=hrs.map(h=>{
+      const he=devs.filter(e=>e.time&&parseInt(e.time.split(":")[0])===h);
+      const evH=he.map(e=>`<div class="week-ev" style="background:${e.status==="done"?"#10b981":e.color};top:2px;min-height:44px" onclick="event.stopPropagation(); if('${e.id}'.startsWith('p_')) openEP('${e.id.slice(2)}'); else openET('${e.id}');">${e.time}<br>${e.name.slice(0,14)}</div>`).join("");
+      return`<div class="week-slot" onclick="goDayView('${iso}')">${evH}</div>`;
+    }).join("");
+    return`<div class="week-day-col">
+      <div class="week-day-hd" onclick="goDayView('${iso}')">
+        <div class="week-day-name">${GGS[i].slice(0,3)}</div>
+        <div class="week-day-num ${isT?"today":""}">${dd.getDate()}</div>
+      </div>
+      ${slots}
+    </div>`;
+  }).join("");
+  return`<div class="week-container"><div class="week-grid">${timecol}<div class="week-days-wrap">${daycols}</div></div></div>`;
+}
+
+// ── CALENDAR DAY ──
+function calDay(em){
+  const d=S.calDate,iso=d.toISOString().slice(0,10),devs=em[iso]||[];
+  const hrs=[];for(let h=6;h<=22;h++)hrs.push(h);
+  const lbl=d.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const rows=hrs.map(h=>{
+    const he=devs.filter(e=>!e.time?h===8:parseInt(e.time.split(":")[0])===h);
+    return`<div class="day-slot">
+      <div class="day-time">${String(h).padStart(2,"0")}:00</div>
+      <div class="day-evs">${he.map(e=>`<div class="day-ev" style="background:${e.status==="done"?"#10b981":e.color}" onclick="if('${e.id}'.startsWith('p_')) openEP('${e.id.slice(2)}'); else openET('${e.id}');">${e.time?e.time+" — ":""}${e.name}</div>`).join("")}</div>
+    </div>`;
+  }).join("");
+  return`<div class="day-hd">${lbl}</div>${rows}`;
+}
+
+// ── CALENDAR YEAR ──
+function calYear(em){
+  const y=S.calDate.getFullYear(),og=oggi();
+  const cells=MESI.map((mn,mi)=>{
+    const fd=new Date(y,mi,1),ld=new Date(y,mi+1,0);
+    let sd=fd.getDay();if(sd===0)sd=7;sd--;
+    const cnt=Object.entries(em).filter(([k])=>k.startsWith(`${y}-${String(mi+1).padStart(2,"0")}`)).reduce((s,[,v])=>s+v.length,0);
+    let miniD="";
+    for(let i=0;i<sd;i++)miniD+=`<div class="year-day"></div>`;
+    for(let day=1;day<=ld.getDate();day++){
+      const iso=`${y}-${String(mi+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const evs=em[iso]||[],isT=iso===og;
+      let bg="transparent";
+      if(evs.length>0)bg=evs.every(e=>e.status==="done")?"#10b981":evs[0].color;
+      miniD+=`<div class="year-day ${isT?"y-today":""} ${evs.length>0?"has-ev":""}" style="background:${bg};opacity:${evs.length>0?0.85:1}" onclick="goDayView('${iso}')"><span class="year-day-num">${day}</span></div>`;
+    }
+    const dowH=GG.map(g=>`<div class="year-dow-lbl">${g}</div>`).join("");
+    return`<div class="year-month">
+      <div class="year-month-name">${MESI_S[mi]}<span class="year-ev-count">${cnt>0?cnt+" eventi":""}</span></div>
+      <div class="year-dow">${dowH}</div>
+      <div class="year-mini">${miniD}</div>
+    </div>`;
+  }).join("");
+  return`<div class="year-grid">${cells}</div>`;
+}
+
+function vCalendar(){
+  const em=buildEvMap(),d=S.calDate;
+  let navTitle="";
+  if(S.calView==="day")navTitle=d.toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
+  else if(S.calView==="week"){
+    const dow=d.getDay(),diff=dow===0?-6:1-dow,sw=new Date(d);sw.setDate(d.getDate()+diff);
+    const ew=new Date(sw);ew.setDate(sw.getDate()+6);
+    navTitle=`${sw.getDate()} – ${ew.toLocaleDateString("it-IT",{day:"numeric",month:"short"})}`;
+  }
+  else if(S.calView==="month")navTitle=`${MESI[d.getMonth()]} ${d.getFullYear()}`;
+  else navTitle=String(d.getFullYear());
+
+  const tabs=["day","week","month","year"].map(v=>`<button class="cal-tab ${S.calView===v?"active":""}" onclick="setCalView('${v}')">${{day:"Giorno",week:"Settimana",month:"Mese",year:"Anno"}[v]}</button>`).join("");
+  let grid="";
+  if(S.calView==="month")grid=calMonth(em);
+  else if(S.calView==="week")grid=calWeek(em);
+  else if(S.calView==="day")grid=calDay(em);
+  else grid=calYear(em);
+
+  const leg=SEZ.map(s=>`<div class="leg-item"><div class="leg-dot" style="background:${s.color}"></div><span class="leg-lbl">${s.icon} ${s.name}</span></div>`).join("");
+  return`
+    <div class="cal-top">
+      <button class="cal-nav" onclick="calPrev()">‹</button>
+      <div class="cal-center"><div class="cal-title">${navTitle}</div><button class="cal-today-btn" onclick="goToday()">● Oggi</button></div>
+      <button class="cal-nav" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-tabs">${tabs}</div>
+    ${grid}
+    <div class="cal-legend">
+      <div class="leg-item"><div class="leg-dot" style="border: 1px dashed #f59e0b; background:#fffbeb"></div><span class="leg-lbl">⚠️ In partenza (&lt;7g)</span></div>
+      ${leg}
+    </div>`;
+}
+
+function vDashboard(){
+  const st=calcStats();
+  const kpis=`<div class="kpi-grid">
+    <div class="kpi" style="border-top:3px solid #6366f1"><div class="kpi-icon">📋</div><div class="kpi-val" style="color:#6366f1">${st.tot}</div><div class="kpi-label">Task totali</div></div>
+    <div class="kpi" style="border-top:3px solid #10b981"><div class="kpi-icon">✅</div><div class="kpi-val" style="color:#10b981">${st.done}</div><div class="kpi-label">Completati</div></div>
+    <div class="kpi" style="border-top:3px solid #f59e0b"><div class="kpi-icon">⚡</div><div class="kpi-val" style="color:#f59e0b">${st.prog}</div><div class="kpi-label">In corso</div></div>
+    <div class="kpi" style="border-top:3px solid #e2e8f0"><div class="kpi-icon">📌</div><div class="kpi-val" style="color:#94a3b8">${st.todo}</div><div class="kpi-label">Da fare</div></div>
+  </div>`;
+  const oggiT=DB.tasks.filter(t=>t.date===oggi()&&t.status!=="done");
+  let todayH="";
+  if(oggiT.length>0){
+    const rows=oggiT.map(t=>{
+      const c=gcourse(t.courseId),sz=c?gsez(c.sezId):null;
+      return`<div class="task-row" onclick="openET('${t.id}')">
+        <div class="tcheck ${t.status}" onclick="event.stopPropagation();toggleTask('${t.id}')">${t.status==="done"?"✓":t.status==="progress"?"▶":""}</div>
+        <div class="tinfo"><div class="tname">${t.name}</div>${t.time?`<div class="tdate">🕐 ${t.time}</div>`:""}${sz?`<div style="font-size:10px;color:${sz.color};font-weight:600;margin-top:2px">${sz.icon} ${sz.name}</div>`:""}</div>
+        ${t.link?`<a href="${t.link}" target="_blank" onclick="event.stopPropagation()" style="background:#6366f1;color:#fff;border-radius:7px;padding:4px 8px;font-size:10px;text-decoration:none;font-weight:700;flex-shrink:0">🔗</a>`:""}
+      </div>`;
+    }).join("");
+    todayH=`<div class="card" style="margin-bottom:12px;border-top:3px solid #6366f1"><div class="card-head"><span style="font-size:18px">📅</span><div><div class="card-title">Oggi</div><div class="card-sub">${oggiT.length} task</div></div></div><div class="card-body" style="padding-top:8px">${rows}</div></div>`;
+  }
+  const sezB=st.bySez.filter(s=>s.total>0).map(s=>`<div style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div style="font-size:13px;font-weight:700">${s.icon} ${s.name}</div>
+      <div style="text-align:right"><span style="font-size:13px;font-weight:800;color:${s.color}">${s.pct}%</span><div style="font-size:10px;color:#94a3b8">${s.done}✓ ${s.prog}⚡ ${s.todo}○</div></div>
+    </div>
+    <div class="sbar"><div class="sbar-done" style="flex:${s.done||0.001}"></div><div class="sbar-prog" style="flex:${s.prog||0.001}"></div><div class="sbar-todo" style="flex:${s.todo||0.001}"></div></div>
+  </div>`).join("");
+  const left=st.pt-st.pp;
+  const payH=`<div class="card"><div class="card-head"><span style="font-size:18px">💳</span><div class="card-title">Pagamenti</div></div><div class="card-body">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1;background:#d1fae5;border-radius:10px;padding:10px;text-align:center"><div style="font-size:15px;font-weight:800;color:#059669">€${st.pp.toFixed(2)}</div><div style="font-size:10px;color:#059669">Pagati</div></div>
+      <div style="flex:1;background:#fee2e2;border-radius:10px;padding:10px;text-align:center"><div style="font-size:15px;font-weight:800;color:#dc2626">€${left.toFixed(2)}</div><div style="font-size:10px;color:#dc2626">Da pagare</div></div>
+      <div style="flex:1;background:#f1f5f9;border-radius:10px;padding:10px;text-align:center"><div style="font-size:15px;font-weight:800;color:#1e293b">€${st.pt.toFixed(2)}</div><div style="font-size:10px;color:#64748b">Totale</div></div>
+    </div>
+    <div style="height:8px;background:#f1f5f9;border-radius:4px"><div style="height:8px;background:#10b981;border-radius:4px;width:${st.pt>0?Math.round(st.pp/st.pt*100):0}%"></div></div>
+  </div></div>`;
+  
+  const syncH=`<div class="sync-box">
+    <div style="font-size:12px;font-weight:700;color:#475569;text-align:center;">🔄 SINCRONIZZAZIONE PC ⇄ ANDROID</div>
+    <div class="sync-btns">
+      <button class="btn-sync" onclick="copyToClipboard()">📋 Copia DB</button>
+      <button class="btn-sync" onclick="pasteFromClipboard()">📥 Incolla DB</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px;">
+      <button class="btn-sync" onclick="exportJSON()" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd;">💾 Esporta File</button>
+      <label class="btn-sync" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0;display:block;">📁 Importa File<input type="file" accept=".json" onchange="importJSON(this)" style="display:none;"/></label>
+    </div>
+  </div>`;
+
+  return kpis+todayH+`<div class="card" style="margin-bottom:12px"><div class="card-head"><span style="font-size:18px">📊</span><div class="card-title">Avanzamento per Sezione</div></div><div class="card-body">${sezB||'<div class="empty">Nessun task ancora</div>'}</div></div>`+payH+syncH;
+}
+
+function vWBS(){
+  const filt=`<div style="display:flex;gap:5px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+    <button onclick="S.fsez='all';render()" style="background:${S.fsez==='all'?"#6366f1":"#f1f5f9"};color:${S.fsez==='all'?"#fff":"#64748b"};border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Tutte</button>
+    ${SEZ.map(s=>`<button onclick="S.fsez='${s.id}';render()" style="background:${S.fsez===s.id?s.color:s.light};color:${S.fsez===s.id?"#fff":s.color};border:none;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer">${s.icon}</button>`).join("")}
+  </div>`;
+  const secs=SEZ.filter(s=>S.fsez==="all"||s.id===S.fsez).map(s=>{
+    const courses=gcourses(s.id),allT=courses.flatMap(c=>gtasks(c.id));
+    const done=allT.filter(t=>t.status==="done").length;
+    const pct=allT.length>0?Math.round(done/allT.length*100):0;
+    const open=S.openSez[s.id];
+    let body="";
+    if(open){
+      if(s.id==="B"){
+        const items=DB.payments.map((p,i)=>{
+          const ov=p.status!=="paid"&&p.dueDate&&isPast(p.dueDate+"T23:59");
+          const soon=!ov&&daysTo(p.dueDate)!==null&&daysTo(p.dueDate)<=7&&p.status!=="paid";
+          let sc="ps-pend",sl="In attesa";
+          if(p.status==="paid"){sc="ps-paid";sl="✓ Pagato";}
+          else if(ov){sc="ps-over";sl="Scaduto!";}
+          else if(soon){sc="ps-soon";sl="In scadenza";}
+          return`<div class="pay" onclick="openEP('${p.id}')"><div class="pay-code">${pcode(i)}</div><div class="pay-name">${p.name}</div><div class="pay-row"><div><div class="pay-amt" style="color:${s.color}">€${Number(p.amount).toFixed(2)}</div>${p.dueDate?`<div class="pay-due">📅 ${fmtD(p.dueDate)}</div>`:""}</div><span class="pay-st ${sc}">${sl}</span></div></div>`;
+        }).join("");
+        body=`<div class="sez-body">${DB.payments.length===0?'<div class="empty">Nessun pagamento</div>':items}<button class="add-row" onclick="openNP()">+ Aggiungi pagamento</button></div>`;
+      } else {
+        const citems=courses.map((c,ci)=>{
+          const tasks=gtasks(c.id),cdone=tasks.filter(t=>t.status==="done").length;
+          const cpct=tasks.length>0?Math.round(cdone/tasks.length*100):0;
+          const titems=tasks.map((t,ti)=>{
+            const ov=t.status!=="done"&&t.date&&isPast(t.date+"T23:59");
+            return`<div class="task-row" onclick="openET('${t.id}')">
+              <div class="tcheck ${t.status==="done"?"done":t.status==="progress"?"progress":""}" onclick="event.stopPropagation();toggleTask('${t.id}')">${t.status==="done"?"✓":t.status==="progress"?"▶":""}</div>
+              <div class="tinfo">
+                <div class="tcode">${tcode(s.id,ci,ti)} — ${t.name}</div>
+                <div class="tname ${t.status==="done"?"done":""}">${t.name}</div>
+                ${t.date?`<div class="tdate" style="color:${ov?"#ef4444":"#64748b"}">📅 ${fmtD(t.date)}${t.time?" "+t.time:""}${ov?" ⚠️":""}</div>`:""}
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+                <span class="tpill pill-${t.status==="done"?"done":t.status==="progress"?"progress":"todo"}">${t.status==="done"?"Fatto":t.status==="progress"?"In corso":"Da fare"}</span>
+                ${t.link?`<a href="${t.link}" target="_blank" onclick="event.stopPropagation()" style="background:${s.color};color:#fff;border-radius:6px;padding:2px 6px;font-size:9px;text-decoration:none;font-weight:700">🔗 Live</a>`:""}
+              </div>
+            </div>`;
+          }).join("");
+          return`<div class="course">
+            <div class="course-top">
+              <div style="flex:1"><div class="course-code" style="color:${s.color}">${ccode(s.id,ci)}</div><div class="course-name">${c.name}</div></div>
+              <div class="cbtns">
+                ${ring(cpct,s.color,40,4)}
+                <button class="cbtn" style="background:${s.light};color:${s.color}" onclick="event.stopPropagation();openEC('${c.id}')">✏️</button>
+                <button class="cbtn" style="background:#fee2e2;color:#ef4444" onclick="event.stopPropagation();delCourse('${c.id}')">🗑</button>
+              </div>
+            </div>
+            <div class="pbar-row"><div class="pbar-bg"><div class="pbar-fill" style="background:${s.color};width:${cpct}%"></div></div><span class="pbar-pct" style="color:${s.color}">${cpct}%</span></div>
+            <div style="margin-top:8px">${titems}<button class="add-row" onclick="openNT('${c.id}')">+ Aggiungi task</button></div>
+          </div>`;
+        }).join("");
+        body=`<div class="sez-body">${courses.length===0?'<div class="empty">Nessun corso — aggiungine uno!</div>':citems}<button class="add-row" onclick="openNC('${s.id}')">+ Aggiungi corso / voce</button></div>`;
+      }
+    }
+    return`<div class="sez" style="border-left:4px solid ${s.color}">
+      <div class="sez-hd" onclick="toggleSez('${s.id}')">
+        <div class="sez-dot" style="background:${s.color}"></div>
+        <div style="flex:1"><div class="sez-name">${s.icon} Sez.${s.id} — ${s.name}</div><div class="sez-info">${allT.length} task · ${done} completati · ${pct}%</div></div>
+        ${ring(pct,s.color,40,4)}
+        <div class="sez-chev ${open?"open":""}">▶</div>
+      </div>
+      ${open?body:""}
+    </div>`;
+  }).join("");
+  return filt+secs;
+}
+
+function vStats(){
+  const st=calcStats();
+  const srows=st.bySez.map(s=>{
+    if(s.total===0)return"";
+    return`<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:700">${s.icon} Sez.${s.id} — ${s.name}</div>
+        <span style="font-size:14px;font-weight:800;color:${s.color}">${s.pct}%</span>
+      </div>
+      <div class="sbar"><div class="sbar-done" style="flex:${s.done||0.001}"></div><div class="sbar-prog" style="flex:${s.prog||0.001}"></div><div class="sbar-todo" style="flex:${s.todo||0.001}"></div></div>
+      <div style="display:flex;gap:10px;margin-top:3px"><span style="font-size:10px;color:#10b981">✓ ${s.done} fatti</span><span style="font-size:10px;color:#f59e0b">⚡ ${s.prog} in corso</span><span style="font-size:10px;color:#94a3b8">○ ${s.todo} da fare</span></div>
+    </div>`;
+  }).join("");
+  const prows=DB.payments.length===0?'<div class="empty">Nessun pagamento</div>':DB.payments.map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9">
+    <div><div style="font-size:10px;color:#94a3b8">${pcode(i)}</div><div style="font-size:12px;font-weight:600">${p.name}</div>${p.dueDate?`<div style="font-size:10px;color:#64748b">📅 ${fmtD(p.dueDate)}</div>`:""}</div>
+    <div style="text-align:right"><div style="font-size:15px;font-weight:800">€${Number(p.amount).toFixed(2)}</div><span class="tpill ${p.status==="paid"?"pill-done":"pill-todo"}">${p.status==="paid"?"✓ Pagato":"Da pagare"}</span></div>
+  </div>`).join("");
+  return`<div style="display:flex;align-items:center;gap:14px;background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:14px">
+    ${ring(st.pct,"#6366f1",72,7)}
+    <div><div style="font-size:11px;color:#94a3b8">Avanzamento globale</div><div style="font-size:22px;font-weight:800">${st.pct}%</div><div style="font-size:11px;color:#64748b">${st.done} fatti · ${st.prog} in corso · ${st.todo} da fare</div></div>
+  </div>
+  <div class="card" style="margin-bottom:12px"><div class="card-head"><span style="font-size:18px">📊</span><div class="card-title">Per Sezione</div></div><div class="card-body">${srows||'<div class="empty">Nessun dato</div>'}</div></div>
+  <div class="card"><div class="card-head"><span style="font-size:18px">💰</span><div class="card-title">Economia</div></div><div class="card-body">${prows}<div style="display:flex;justify-content:space-between;margin-top:10px;padding:10px;background:#f8fafc;border-radius:10px"><span style="font-size:12px;font-weight:600">Totale</span><span style="font-size:15px;font-weight:800">€${st.pt.toFixed(2)}</span></div></div></div>`;
+}
+
+function vModal(){
+  if(!S.modal)return"";
+  let body="",title="";
+  if(S.modal==="course"){
+    title=S.ec?"Modifica Corso":"Nuovo Corso / Voce";
+    const sOpts=SEZ.map(s=>`<option value="${s.id}" ${FC.course.sezId===s.id?"selected":""}>${s.icon} Sez.${s.id} — ${s.name}</option>`).join("");
+    const sz=gsez(FC.course.sezId);
+    body=`<div><label class="flabel">Sezione</label><select class="inp" onchange="FC.course.sezId=this.value; render();">${sOpts}</select></div>
+      <div><label class="flabel">Nome corso / voce *</label><input id="ic_name" class="inp" placeholder="Es: Master Management, PMP..." value="${FC.course.name}"/></div>
+      <div><label class="flabel">Note</label><textarea id="ic_notes" class="inp" style="height:70px;resize:vertical">${FC.course.notes}</textarea></div>
+      <button class="btn-main" style="background:${sz?.color||"#6366f1"}" onclick="saveCourse()">${S.ec?"Aggiorna":"Aggiungi"}</button>
+      ${S.ec?`<button class="btn-del" onclick="delCourse('${S.ec.id}')">Elimina corso</button>`:""}`;
+  } else if(S.modal==="task"){
+    title=S.et?"Modifica Task":"Nuovo Task";
+    const cOpts=DB.courses.map(c=>{const si=gcourses(c.sezId).indexOf(c);return`<option value="${c.id}" ${FC.task.courseId===c.id?"selected":""}>${ccode(c.sezId,si)} — ${c.name}</option>`;}).join("");
+    const prOpts=[["alta","🔴 Alta"],["media","🟡 Media"],["bassa","🟢 Bassa"]].map(([v,l])=>`<option value="${v}" ${FC.task.priority===v?"selected":""}>${l}</option>`).join("");
+    const stOpts=[["todo","Da fare"],["progress","In corso"],["done","Completato"]].map(([v,l])=>`<option value="${v}" ${FC.task.status===v?"selected":""}>${l}</option>`).join("");
+    const c=gcourse(FC.task.courseId),sz=c?gsez(c.sezId):null;
+    body=`<div><label class="flabel">Corso</label><select class="inp" onchange="FC.task.courseId=this.value; render();"><option value="">-- Seleziona --</option>${cOpts}</select></div>
+      <div><label class="flabel">Nome task *</label><input id="it_name" class="inp" placeholder="Es: Time Management, Modulo 3..." value="${FC.task.name}"/></div>
+      <div class="inp2"><div><label class="flabel">Data</label><input id="it_date" class="inp" type="date" value="${FC.task.date}"/></div><div><label class="flabel">Ora</label><input id="it_time" class="inp" type="time" value="${FC.task.time}"/></div></div>
+      <div class="inp2"><div><label class="flabel">Stato</label><select class="inp" onchange="FC.task.status=this.value; render();">${stOpts}</select></div><div><label class="flabel">Priorità</label><select class="inp" onchange="FC.task.priority=this.value; render();">${prOpts}</select></div></div>
+      <div><label class="flabel">Avanzamento: <span id="rv" style="color:#6366f1;font-weight:700">${FC.task.progress}%</span></label><input type="range" min="0" max="100" step="5" value="${FC.task.progress}" oninput="upRange(this.value)"/></div>
+      <div><label class="flabel">🔗 Link live / call</label><input id="it_link" class="inp" placeholder="https://zoom.us/..." value="${FC.task.link}"/></div>
+      <div><label class="flabel">Note</label><textarea id="it_notes" class="inp" style="height:70px;resize:vertical">${FC.task.notes}</textarea></div>
+      <button class="btn-main" style="background:${sz?.color||"#6366f1"}" onclick="saveTask()">${S.et?"Aggiorna":"Aggiungi Task"}</button>
+      ${S.et?`<button class="btn-del" onclick="delTask('${S.et.id}')">Elimina task</button>`:""}`;
+  } else if(S.modal==="pay"){
+    title=S.ep?"Modifica Pagamento":"Nuovo Pagamento";
+    const stOpts=[["pending","In attesa"],["paid","✓ Pagato"],["overdue","Scaduto"]].map(([v,l])=>`<option value="${v}" ${FC.pay.status===v?"selected":""}>${l}</option>`).join("");
+    body=`<div><label class="flabel">Descrizione *</label><input id="ip_name" class="inp" placeholder="Es: Rata Master Gennaio..." value="${FC.pay.name}"/></div>
+      <div class="inp2"><div><label class="flabel">Importo €</label><input id="ip_amt" class="inp" type="number" placeholder="0.00" value="${FC.pay.amount}"/></div><div><label class="flabel">Scadenza</label><input id="ip_due" class="inp" type="date" value="${FC.pay.dueDate}"/></div></div>
+      <div><label class="flabel">Stato</label><select class="inp" onchange="FC.pay.status=this.value; render();">${stOpts}</select></div>
+      <div><label class="flabel">Note</label><textarea id="ip_notes" class="inp" style="height:60px;resize:vertical">${FC.pay.notes}</textarea></div>
+      <button class="btn-main" style="background:#f59e0b" onclick="savePay()">${S.ep?"Aggiorna":"Aggiungi"}</button>
+      ${S.ep?`<button class="btn-del" onclick="delPay('${S.ep.id}')">Elimina</button>`:""}`;
+  }
+  return`<div class="overlay" onclick="oclk(event)"><div class="modal"><div class="modal-hd"><div class="modal-title">${title}</div><button class="modal-x" onclick="closeModal()">×</button></div><div class="modal-body">${body}</div></div></div>`;
+}
+
+function render(){
+  const st=calcStats();
+  const dateStr=new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
+  const navs=[["dashboard","🏠","Dashboard"],["wbs","🗂","WBS"],["calendar","📅","Calendario"],["stats","📊","Stats"]];
+  const navH=navs.map(([v,ic,lb])=>`<button class="nb ${S.view===v?"active":""}" onclick="setView('${v}')"><div class="nb-icon">${ic}</div><div class="nb-label">${lb}</div></button>`).join("");
+  let content="";
+  if(S.view==="dashboard")content=vDashboard();
+  else if(S.view==="wbs")content=vWBS();
+  else if(S.view==="calendar")content=vCalendar();
+  else if(S.view==="stats")content=vStats();
+  const fabAct=S.view==="wbs"?"openNC('')":"openNT('')";
+  document.getElementById("app").innerHTML=`
+    <div class="hdr">
+      <div class="hdr-eyebrow">WBS Planner</div>
+      <div class="hdr-title">Mission Control</div>
+      <div class="hdr-date">${dateStr}</div>
+      <div class="hdr-ring">
+        ${ring(st.pct,"#ffffff",52,5)}
+        <div class="hdr-ring-info">
+          <div class="hdr-ring-label">Avanzamento globale</div>
+          <div class="hdr-ring-val">${st.pct}% completato</div>
+          <div class="hdr-ring-bar"><div class="hdr-ring-fill" style="width:${st.pct}%"></div></div>
+        </div>
+      </div>
+    </div>
+    <nav class="nav">${navH}</nav>
+    <div class="content">${content}</div>
+    <button class="fab" onclick="${fabAct}">+</button>
+    ${vModal()}`;
+}
+render();
+</script>
+</body>
+</html>
